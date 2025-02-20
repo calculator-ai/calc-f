@@ -25,8 +25,11 @@ export default function Home() {
   const [dictOfVars, setDictOfVars] = useState({});
   const [result, setResult] = useState<GeneratedResult>();
   const [latexPosition, setLatexPosition] = useState({ x: 10, y: 200 });
+  const [eraserMode, setEraserMode] = useState(false);
   const [latexExpression, setLatexExpression] = useState<Array<string>>([]);
-  const [positions, setPositions] = useState<{ [key: number]: { x: number; y: number } }>({}); // ✅ Store separate positions for each item
+  const [positions, setPositions] = useState<{ [key: number]: { x: number; y: number } }>({});
+  const [eraserSize, setEraserSize] = useState(20); 
+  const [eraserCursorPosition, setEraserCursorPosition] = useState({ x: -100, y: -100 });
 
   useEffect(() => {
     if (latexExpression.length > 0 && window.MathJax) {
@@ -182,65 +185,123 @@ export default function Home() {
       }
     }
   };
+
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) {
-      return;
-    }
+    if (!isDrawing) return;
+
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.strokeStyle = color;
-        ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-        ctx.stroke();
+        if (eraserMode) {
+          // ✅ Use dynamic eraser size
+          const size = eraserSize;
+          ctx.clearRect(e.nativeEvent.offsetX - size / 2, e.nativeEvent.offsetY - size / 2, size, size);
+        } else {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 3;
+          ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+          ctx.stroke();
+        }
       }
     }
   };
+
   const stopDrawing = () => {
     setIsDrawing(false);
   };
 
+   // ✅ Track mouse movement to position eraser cursor
+   const updateCursorPosition = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    setEraserCursorPosition({ x: e.clientX, y: e.clientY });
+  };
+  
+
   return (
     <>
-      <div className="flex gap-10 absolute top-1 justify-center w-full">
+      <div className="flex gap-10 absolute top-1 justify-center w-full items-center">
+        {/* ✅ Reset Button */}
         <Button
-          onClick={() => setReset(true)}
+          onClick={resetCanvas}
           className="z-20 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           variant="default"
         >
           Reset
         </Button>
 
+        {/* ✅ Eraser Toggle */}
+        <Button
+          onClick={() => setEraserMode(!eraserMode)}
+          className={`z-20 ${eraserMode ? "bg-red-500" : "bg-green-500"} hover:bg-blue-700 text-white font-bold py-2 px-4 rounded`}
+          variant="default"
+        >
+          {eraserMode ? "Eraser ON" : "Eraser OFF"}
+        </Button>
+
+        {/* ✅ Eraser Size Slider */}
+        {eraserMode && (
+          <div className="z-20 flex items-center">
+            <label className="text-white mr-2">Size: {eraserSize}px</label>
+            <input
+              type="range"
+              min="5"
+              max="50"
+              value={eraserSize}
+              onChange={(e) => setEraserSize(parseInt(e.target.value))}
+              className="cursor-pointer"
+            />
+          </div>
+        )}
+
+        {/* ✅ Color Palette */}
         <Group className="z-20 w-50">
           {SWATCHES.map((swatch) => (
             <ColorSwatch
               key={swatch}
               color={swatch}
-              onClick={() => setColor(swatch)}
+              onClick={() => {
+                setColor(swatch);
+                setEraserMode(false); // ✅ Disable eraser when selecting a color
+              }}
             />
           ))}
         </Group>
-
-        <Button
-          onClick={sendData}
-          className="z-20 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          variant="default"
-        >
-          Run
-        </Button>
       </div>
 
       <canvas
-        ref={canvasRef}
-        id="canvas"
-        className="absolute top-0 left-0 w-full h-full bg-black"
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseOut={stopDrawing}
-      />
+  ref={canvasRef}
+  id="canvas"
+  className="absolute top-0 left-0 w-full h-full bg-black"
+  onMouseDown={startDrawing}
+  onMouseMove={(e) => {
+    updateCursorPosition(e);  // ✅ Ensure cursor updates correctly
+    draw(e);
+  }}
+  onMouseUp={stopDrawing}
+  onMouseOut={stopDrawing}
+/>
 
-<DndContext>
+     
+      {/* ✅ Eraser Cursor (Visible Circle) */}
+      {eraserMode && (
+        <div
+          style={{
+            position: "fixed",
+            left: eraserCursorPosition.x - eraserSize / 2,
+            top: eraserCursorPosition.y - eraserSize / 2,
+            width: eraserSize,
+            height: eraserSize,
+            borderRadius: "50%",
+            border: "2px solid white",
+            pointerEvents: "none", 
+            backgroundColor: "rgba(255, 255, 255, 0.2)", 
+            zIndex:1000,
+          }}
+        />
+      )}
+      
+
+     <DndContext>
       {latexExpression.map((latex, index) => (
         <DraggableItem
           key={index}
