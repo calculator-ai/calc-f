@@ -237,6 +237,13 @@ export default function Home() {
         >
           {eraserMode ? "Eraser ON" : "Eraser OFF"}
         </Button>
+        <Button
+          onClick={sendData}
+          className="z-20 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          variant="default"
+        >
+          Run
+        </Button>
 
         {/* ✅ Eraser Size Slider */}
         {eraserMode && (
@@ -280,7 +287,6 @@ export default function Home() {
   onMouseUp={stopDrawing}
   onMouseOut={stopDrawing}
 />
-
      
       {/* ✅ Eraser Cursor (Visible Circle) */}
       {eraserMode && (
