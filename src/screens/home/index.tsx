@@ -18,8 +18,6 @@ interface Response {
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [color, setColor] = useState("rgb(255, 255, 255)");
   const [reset, setReset] = useState(false);
   const [dictOfVars, setDictOfVars] = useState<Record<string, string>>({});
   const [result, setResult] = useState<GeneratedResult>();
@@ -27,7 +25,6 @@ export default function Home() {
   const [latexExpression, setLatexExpression] = useState<string[]>([]);
   const [positions, setPositions] = useState<Record<number, { x: number; y: number }>>({});
   const [eraserSize, setEraserSize] = useState(20);
-  const [eraserCursorPosition, setEraserCursorPosition] = useState({ x: -100, y: -100 });
 
   useEffect(() => {
     if (latexExpression.length > 0 && window.MathJax) {
@@ -54,18 +51,6 @@ export default function Home() {
   }, [reset]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-
-    if (canvas) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight - canvas.offsetTop;
-        ctx.lineCap = "round";
-        ctx.lineWidth = 3;
-      }
-    }
-
     const script = document.createElement("script");
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML";
     script.async = true;
@@ -73,9 +58,7 @@ export default function Home() {
 
     script.onload = () => {
       window.MathJax.Hub.Config({
-        tex2jax: {
-          inlineMath: [["$", "$"], ["\\(", "\\)"]],
-        },
+        tex2jax: { inlineMath: [["$", "$"], ["\\(", "\\)"]] },
       });
     };
 
@@ -88,7 +71,6 @@ export default function Home() {
     const latex = `\\(\\LARGE{${expression} = ${answer}}\\)`;
     setLatexExpression((prev) => [...prev, latex]);
 
-    // Clear the main canvas
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext("2d");
@@ -158,7 +140,7 @@ export default function Home() {
 
         <Group className="z-20 w-50">
           {SWATCHES.map((swatch) => (
-            <ColorSwatch key={swatch} color={swatch} onClick={() => { setColor(swatch); setEraserMode(false); }} />
+            <ColorSwatch key={swatch} color={swatch} onClick={() => setEraserMode(false)} />
           ))}
         </Group>
       </div>
