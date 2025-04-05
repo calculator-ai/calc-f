@@ -16,6 +16,13 @@ interface Response {
   result: string;
   assign: boolean;
 }
+interface DraggableItemProps {
+  index: number;
+  latex: string;
+  position: { x: number; y: number };
+  setPositions: React.Dispatch<React.SetStateAction<{ [key: number]: { x: number; y: number } }>>;
+}
+
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -308,7 +315,7 @@ export default function Home() {
       
 
      <DndContext>
-      {latexExpression.map((latex, index) => (
+      {latexExpression.map((latex:string, index:number) => (
         <DraggableItem
           key={index}
           index={index}
@@ -323,7 +330,7 @@ export default function Home() {
 }
 
 
-function DraggableItem({ index, latex, position, setPositions }) {
+function DraggableItem({ index, latex, position, setPositions }: DraggableItemProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: index });
 
   return (
